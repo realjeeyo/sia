@@ -1,6 +1,6 @@
-"use client";  // This forces it to run as a Client Component
-
-import { useQuery, gql } from "@apollo/client";
+"use client"; // if using Next.js app directory
+import React, { useEffect, useState } from "react";
+import { gql, useQuery, useSubscription } from "@apollo/client";
 
 const GET_POSTS = gql`
   query GetPosts {
@@ -12,30 +12,60 @@ const GET_POSTS = gql`
   }
 `;
 
-export default function PostTable() {
-  const { data, loading, error } = useQuery(GET_POSTS);
+const POST_CREATED_SUBSCRIPTION = gql`
+  subscription OnPostCreated {
+    postCreated {
+      id
+      title
+      content
+    }
+  }
+`;
 
-  if (loading) return <p>Loading...</p>;
+const PostTable = () => {
+  const { data, loading, error, refetch } = useQuery(GET_POSTS);
+  const [posts, setPosts] = useState([]);
+
+  // Update posts state when initial query returns
+  useEffect(() => {
+    if (data && data.posts) {
+      setPosts(data.posts);
+    }
+  }, [data]);
+
+  // Listen for new posts via subscription and refetch data
+  useSubscription(POST_CREATED_SUBSCRIPTION, {
+    onData: () => {
+      refetch(); // Force a refetch when a new post is created
+    },
+  });
+
+  if (loading) return <p>Loading posts...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Content</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.posts.map((post: any) => (
-          <tr key={post.id}>
-            <td>{post.id}</td>
-            <td>{post.title}</td>
-            <td>{post.content}</td>
+    <div>
+      <h2>Posts</h2>
+      <table border="1">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Content</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {posts.map((post: any) => (
+            <tr key={post.id}>
+              <td>{post.id}</td>
+              <td>{post.title}</td>
+              <td>{post.content}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
-}
+};
+
+export default PostTable;
