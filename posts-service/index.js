@@ -62,6 +62,7 @@ const app = express();
 app.use(cors());
 
 const httpServer = createServer(app);
+let subscriptionServer;
 
 const server = new ApolloServer({
   schema,
@@ -83,7 +84,7 @@ server.start().then(() => {
   server.applyMiddleware({ app });
   
   // Set up the subscription server using subscriptions-transport-ws
-  const subscriptionServer = SubscriptionServer.create(
+  subscriptionServer = SubscriptionServer.create(
     {
       schema,
       execute,
