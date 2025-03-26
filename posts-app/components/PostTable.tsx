@@ -27,9 +27,7 @@ const PostTable = () => {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    if (data && data.posts) {
-      setPosts(data.posts);
-    }
+    if (data?.posts) setPosts(data.posts);
   }, [data]);
 
   useSubscription(POST_CREATED_SUBSCRIPTION, {
@@ -38,32 +36,32 @@ const PostTable = () => {
     },
   });
 
-  if (loading) return <p className="text-center text-lg text-gray-500">Loading posts...</p>;
-  if (error) return <p className="text-center text-lg text-red-500">Error: {error.message}</p>;
+  if (loading) return <p className="text-center text-gray-400">Loading...</p>;
+  if (error) return <p className="text-center text-red-400">Error: {error.message}</p>;
 
   return (
-    <div className="p-8 flex flex-col items-center bg-gradient-to-br from-blue-100 to-purple-200 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Posts</h2>
-      <div className="overflow-hidden shadow-lg rounded-2xl w-full max-w-4xl">
-        <table className="w-full border-collapse bg-white/80 shadow-lg rounded-xl overflow-hidden">
-          <thead className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+    <div className="min-h-screen bg-[#0f0f0f] text-gray-200 flex flex-col items-center px-6 py-10">
+      <h2 className="text-3xl font-semibold mb-6 text-white">Posts</h2>
+      <div className="w-full max-w-5xl bg-[#1a1a1a] rounded-2xl overflow-hidden shadow-lg ring-1 ring-gray-800">
+        <table className="w-full text-sm">
+          <thead className="bg-[#222] text-gray-300 uppercase text-xs tracking-wider">
             <tr>
-              <th className="px-6 py-4 text-left text-lg">ID</th>
-              <th className="px-6 py-4 text-left text-lg">Title</th>
-              <th className="px-6 py-4 text-left text-lg">Content</th>
+              <th className="px-6 py-4 text-left">ID</th>
+              <th className="px-6 py-4 text-left">Title</th>
+              <th className="px-6 py-4 text-left">Content</th>
             </tr>
           </thead>
           <tbody>
             {posts.map((post: any, index) => (
               <tr
                 key={post.id}
-                className={`transition-colors duration-300 hover:bg-indigo-100 ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-100"
-                }`}
+                className={`${
+                  index % 2 === 0 ? "bg-[#1f1f1f]" : "bg-[#2a2a2a]"
+                } hover:bg-[#333] transition-colors`}
               >
-                <td className="px-6 py-4 border-b text-gray-700 font-medium">{post.id}</td>
-                <td className="px-6 py-4 border-b text-gray-700">{post.title}</td>
-                <td className="px-6 py-4 border-b text-gray-700">{post.content}</td>
+                <td className="px-6 py-4">{post.id}</td>
+                <td className="px-6 py-4">{post.title}</td>
+                <td className="px-6 py-4">{post.content}</td>
               </tr>
             ))}
           </tbody>

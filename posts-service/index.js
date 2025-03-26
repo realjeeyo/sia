@@ -18,24 +18,32 @@ const typeDefs = gql`
     title: String
     content: String
   }
+
   type Query {
     posts: [Post]
     post(id: Int!): Post
   }
+
   type Mutation {
     createPost(title: String!, content: String!): Post
     updatePost(id: Int!, title: String, content: String): Post
     deletePost(id: Int!): Post
+    deletePosts(ids: [Int!]!): BatchPayload
   }
+
   type Subscription {
     postCreated: Post
+  }
+
+  type BatchPayload {
+    count: Int!
   }
 `;
 
 const resolvers = {
   Query: {
-    posts: async () => await prisma.post.findMany(),
-    post: async (_, { id }) => await prisma.post.findUnique({ where: { id } }),
+    posts: () => prisma.post.findMany(),
+    post: (_, { id }) => prisma.post.findUnique({ where: { id } }),
   },
   Mutation: {
     createPost: async (_, { title, content }) => {
@@ -43,14 +51,21 @@ const resolvers = {
       pubsub.publish('POST_CREATED', { postCreated: newPost });
       return newPost;
     },
-    updatePost: async (_, { id, title, content }) =>
-      await prisma.post.update({ where: { id }, data: { title, content } }),
-    deletePost: async (_, { id }) =>
-      await prisma.post.delete({ where: { id } }),
+    updatePost: (_, { id, title, content }) =>
+      prisma.post.update({
+        where: { id },
+        data: { title, content },
+      }),
+    deletePost: (_, { id }) => prisma.post.delete({ where: { id } }),
+    deletePosts: async (_, { ids }) => {
+      const result = await prisma.post.deleteMany({
+        where: { id: { in: ids } },
+      });
+      return { count: result.count };
+    },
   },
   Subscription: {
     postCreated: {
-      // Updated to use asyncIterableIterator
       subscribe: () => pubsub.asyncIterableIterator(['POST_CREATED']),
     },
   },
@@ -79,11 +94,9 @@ const server = new ApolloServer({
   ],
 });
 
-// Start the Apollo server
 server.start().then(() => {
   server.applyMiddleware({ app });
-  
-  // Set up the subscription server using subscriptions-transport-ws
+
   subscriptionServer = SubscriptionServer.create(
     {
       schema,
@@ -95,10 +108,10 @@ server.start().then(() => {
       path: server.graphqlPath,
     }
   );
-  
+
   const PORT = 4002;
   httpServer.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
-    console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`📡 Subscriptions ready at ws://localhost:${PORT}${server.graphqlPath}`);
   });
 });
